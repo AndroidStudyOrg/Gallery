@@ -10,10 +10,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.GridLayoutManager
 import org.shop.gallery.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var imageAdapter: ImageAdapter
 
     // 1. 이미지 로드하는 런처 생성
     private val imageLoadLauncher =
@@ -29,6 +31,20 @@ class MainActivity : AppCompatActivity() {
 
         binding.loadImageButton.setOnClickListener {
             checkPermission()
+        }
+        initRecyclerView()
+    }
+
+    private fun initRecyclerView() {
+        imageAdapter = ImageAdapter(object : ImageAdapter.ItemClickListener {
+            override fun onLoadMoreClick() {
+                checkPermission()
+            }
+        })
+
+        binding.imageRecyclerView.apply {
+            adapter = imageAdapter
+            layoutManager = GridLayoutManager(context, 2)
         }
     }
 
@@ -78,6 +94,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateImages(uriList: List<Uri>) {
         Log.i("updateImages", "uriList : $uriList")
+        val images = uriList.map { ImageItems.Image(it) }
+        val updatedImage = imageAdapter.currentList.toMutableList().apply {
+            addAll(images)
+        }
+        imageAdapter.submitList(updatedImage)
     }
 
     override fun onRequestPermissionsResult(
@@ -88,7 +109,8 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             REQUEST_READ_EXTERNAL_STORAGE -> {
-                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                val resultCode = grantResults.firstOrNull() ?: PackageManager.PERMISSION_DENIED
+                if (resultCode == PackageManager.PERMISSION_GRANTED) {
                     loadImage()
                 }
             }
