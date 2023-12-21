@@ -1,8 +1,9 @@
 package org.shop.gallery
 
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.tabs.TabLayoutMediator
 import org.shop.gallery.databinding.ActivityFrameBinding
 
@@ -14,6 +15,12 @@ class FrameActivity : AppCompatActivity() {
         binding = ActivityFrameBinding.inflate(layoutInflater).also {
             setContentView(it.root)
         }
+
+        binding.toolbar.apply {
+            title = "나만의 앨범"
+            setSupportActionBar(this)
+        }
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val images = (intent.getStringArrayExtra("images")
             ?: emptyArray()).map { uriString -> FrameItem(Uri.parse(uriString)) }
@@ -28,5 +35,16 @@ class FrameActivity : AppCompatActivity() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             binding.viewPager.currentItem = tab.position
         }.attach()
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
