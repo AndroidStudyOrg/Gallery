@@ -2,16 +2,25 @@ package org.shop.gallery
 
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.shop.gallery.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+
+    // 1. 이미지 로드하는 런처 생성
+    private val imageLoadLauncher =
+        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uriList ->
+            updateImages(uriList)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater).also {
@@ -54,6 +63,11 @@ class MainActivity : AppCompatActivity() {
         }.show()
     }
 
+    private fun loadImage() {
+        // 이미지 타입으로 된 모든 파일을 열어서 가져올 것이다. SAF를 사용할 때 이 MIME 타입을 이용해서 가져오겠다.
+        imageLoadLauncher.launch("image/*")
+    }
+
     private fun requestReadExternalStorage() {
         ActivityCompat.requestPermissions(
             this,
@@ -62,8 +76,23 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun loadImage() {
-        Log.d("MainActivity", "loadImage")
+    private fun updateImages(uriList: List<Uri>) {
+        Log.i("updateImages", "uriList : $uriList")
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            REQUEST_READ_EXTERNAL_STORAGE -> {
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                    loadImage()
+                }
+            }
+        }
     }
 
     companion object {
